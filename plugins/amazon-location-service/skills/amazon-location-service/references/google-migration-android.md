@@ -376,6 +376,7 @@ import org.maplibre.android.plugins.annotation.SymbolOptions
 
 class MapActivity : AppCompatActivity() {
     private lateinit var mapView: MapView
+    private val apiKey = "YOUR_AMAZON_LOCATION_API_KEY"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -383,10 +384,11 @@ class MapActivity : AppCompatActivity() {
         MapLibre.getInstance(this)
         mapView = MapView(this)
         setContentView(mapView)
+        mapView.onCreate(savedInstanceState)
 
         mapView.getMapAsync { map ->
             // Get Amazon Location map style
-            val styleUrl = "https://maps.geo.us-west-2.amazonaws.com/v2/styles/Standard/descriptor?key=$API_KEY"
+            val styleUrl = "https://maps.geo.us-west-2.amazonaws.com/v2/styles/Standard/descriptor?key=$apiKey"
 
             map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
                 // Add marker
@@ -405,6 +407,18 @@ class MapActivity : AppCompatActivity() {
             }
         }
     }
+
+    // MapLibre requires forwarding these Activity lifecycle calls to MapView
+    override fun onStart() { super.onStart(); mapView.onStart() }
+    override fun onResume() { super.onResume(); mapView.onResume() }
+    override fun onPause() { mapView.onPause(); super.onPause() }
+    override fun onStop() { mapView.onStop(); super.onStop() }
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        mapView.onSaveInstanceState(outState)
+    }
+    override fun onLowMemory() { super.onLowMemory(); mapView.onLowMemory() }
+    override fun onDestroy() { mapView.onDestroy(); super.onDestroy() }
 }
 ```
 
