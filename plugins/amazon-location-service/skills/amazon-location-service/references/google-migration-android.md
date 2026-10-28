@@ -634,6 +634,8 @@ googleMap.addPolyline(polylineOptions)
 **Amazon Location:**
 
 ```kotlin
+import aws.sdk.kotlin.services.georoutes.model.CalculateRoutesRequest
+import aws.sdk.kotlin.services.georoutes.model.GeometryFormat
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.PropertyFactory.*
 import org.maplibre.android.style.sources.GeoJsonSource
@@ -641,8 +643,18 @@ import org.maplibre.geojson.Feature
 import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
 
-// Convert route to GeoJSON
-val coordinates = routePoints.map { Point.fromLngLat(it.second, it.first) }
+// Request Simple geometry so each leg has a lineString. The default, FlexiblePolyline,
+// returns geometry.polyline instead (decode it with Polyline.decodeToLineStringFeature).
+val response = routesClient.calculateRoutes(CalculateRoutesRequest {
+    origin = listOf(-97.7431, 30.2747) // Austin [lng, lat]
+    destination = listOf(-96.7970, 32.7767) // Dallas [lng, lat]
+    legGeometryFormat = GeometryFormat.Simple
+})
+
+// Convert route to GeoJSON; lineString positions are already [lng, lat]
+val coordinates = response.routes.firstOrNull()?.legs.orEmpty().flatMap { leg ->
+    leg.geometry?.lineString.orEmpty().map { Point.fromLngLat(it[0], it[1]) }
+}
 val lineString = LineString.fromLngLats(coordinates)
 val feature = Feature.fromGeometry(lineString)
 
